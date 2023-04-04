@@ -14,7 +14,7 @@ from .common import (
     parse_parameters_from_env,
     InvalidTranformerInitialisation,
     load_pipeline_from_settings,
-    SUPPORTED_OPTIMUM_TASKS,
+    get_supported_optimum_task,
 )
 from .codecs import HuggingfaceRequestCodec
 from .metadata import METADATA
@@ -46,6 +46,7 @@ class HuggingFaceRuntime(MLModel):
             )
 
         if self.hf_settings.optimum_model:
+            SUPPORTED_OPTIMUM_TASKS = get_supported_optimum_task()
             if self.hf_settings.task not in SUPPORTED_OPTIMUM_TASKS:
                 raise InvalidTranformerInitialisation(
                     500,

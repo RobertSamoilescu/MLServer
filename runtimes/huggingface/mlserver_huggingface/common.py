@@ -12,16 +12,6 @@ from transformers.pipelines import pipeline
 from transformers.pipelines.base import Pipeline
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-try:
-    # Optimum 1.7 changed the import name from `SUPPORTED_TASKS` to
-    # `ORT_SUPPORTED_TASKS`.
-    # We'll try to import the more recent one, falling back to the previous
-    # import name if not present.
-    # https://github.com/huggingface/optimum/blob/987b02e4f6e2a1c9325b364ff764da2e57e89902/optimum/pipelines/__init__.py#L18
-    from optimum.pipelines import ORT_SUPPORTED_TASKS as SUPPORTED_OPTIMUM_TASKS
-except ImportError:
-    from optimum.pipelines import SUPPORTED_TASKS as SUPPORTED_OPTIMUM_TASKS
-
 
 HUGGINGFACE_TASK_TAG = "task"
 
@@ -108,6 +98,20 @@ def parse_parameters_from_env() -> Dict:
     return parsed_parameters
 
 
+def get_supported_optimum_task():
+    try:
+        # Optimum 1.7 changed the import name from `SUPPORTED_TASKS` to
+        # `ORT_SUPPORTED_TASKS`.
+        # We'll try to import the more recent one, falling back to the previous
+        # import name if not present.
+        # https://github.com/huggingface/optimum/blob/987b02e4f6e2a1c9325b364ff764da2e57e89902/optimum/pipelines/__init__.py#L18
+        from optimum.pipelines import ORT_SUPPORTED_TASKS as SUPPORTED_OPTIMUM_TASKS
+    except ImportError:
+        from optimum.pipelines import SUPPORTED_TASKS as SUPPORTED_OPTIMUM_TASKS
+
+    return SUPPORTED_OPTIMUM_TASKS
+
+
 def load_pipeline_from_settings(
     hf_settings: HuggingFaceSettings, settings: ModelSettings
 ) -> Pipeline:
@@ -124,6 +128,7 @@ def load_pipeline_from_settings(
         tokenizer = model
 
     if hf_settings.optimum_model:
+        SUPPORTED_OPTIMUM_TASKS = get_supported_optimum_task()
         optimum_class = SUPPORTED_OPTIMUM_TASKS[hf_settings.task]["class"][0]
         model = optimum_class.from_pretrained(
             hf_settings.pretrained_model,

@@ -25,6 +25,13 @@ def _load_description() -> str:
         return fp.read()
 
 
+extras_require = {
+    'tensorflow': ['tensorflow >=2.5.0, <2.11.0, !=2.6.0, !=2.6.1'],
+    'torch': ['torch >=1.9.0, <2.1.0'],
+    'optimum': ["optimum[onnxruntime]>=1.4.0, <1.8.0"],
+}
+
+
 setup(
     name=PKG_NAME,
     version=_load_version(),
@@ -35,10 +42,10 @@ setup(
     packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=[
         "mlserver",
-        "optimum[onnxruntime]>=1.4.0, <1.8.0",
         "transformers",
         "Pillow",
     ],
+    extras_require=extras_require,
     long_description=_load_description(),
     long_description_content_type="text/markdown",
     license="Apache 2.0",
