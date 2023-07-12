@@ -2379,6 +2379,17 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 
 [[package]]
+name = "httpx-sse"
+version = "0.3.1"
+description = "Consume Server-Sent Event (SSE) messages with HTTPX."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "httpx-sse-0.3.1.tar.gz", hash = "sha256:3bb3289b2867f50cbdb2fee3eeeefecb1e86653122e164faac0023f1ffc88aea"},
+    {file = "httpx_sse-0.3.1-py3-none-any.whl", hash = "sha256:7376dd88732892f9b6b549ac0ad05a8e2341172fe7dcf9f8f9c8050934297316"},
+]
+
+[[package]]
 name = "huggingface-hub"
 version = "0.21.3"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
@@ -8096,4 +8107,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "3952b5d6b5e21d2400ad518579423d074b397371445e2aed58e9b610abb2e517"
+content-hash = "28796678884d347943c8dfe530acc1e7e58d63e23c256b86f4efee6fc69020be"
