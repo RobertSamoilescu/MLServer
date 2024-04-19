@@ -88,7 +88,21 @@ class DataPlane:
         version: Optional[str] = None,
     ) -> InferenceResponse:
         async with self._infer(payload, name, version) as model:
-            prediction = await model.predict(payload)
+            if (
+                self._response_cache is not None
+                and model.settings.cache_enabled is not False
+            ):
+                cache_key = payload.json()
+                cache_value = await self._response_cache.lookup(cache_key)
+
+                if cache_value != "":
+                    prediction = InferenceResponse.parse_raw(cache_value)
+                else:
+                    prediction = await model.predict(payload)
+                    # ignore cache insertion error if any
+                    await self._response_cache.insert(cache_key, prediction.json())
+            else:
+                prediction = await model.predict(payload)
 
             # Ensure ID matches
             prediction.id = payload.id
@@ -99,6 +113,7 @@ class DataPlane:
         self, payload: InferenceRequest, name: str, version: Optional[str] = None
     ) -> AsyncIterator[InferenceResponse]:
         async with self._infer(payload, name, version) as model:
+            # TODO: Implement cache for stream
             async for prediction in model.predict_stream(payload):
                 # Ensure ID matches
                 prediction.id = payload.id
@@ -121,9 +136,6 @@ class DataPlane:
             model=name, version=version
         ).count_exceptions()
 
-        if self._response_cache is not None:
-            cache_key = payload.json()
-
         with infer_duration, infer_errors:
             if payload.id is None:
                 payload.id = generate_uuid()
@@ -138,3 +150,9 @@ class DataPlane:
                 yield model
 
             self._ModelInferRequestSuccess.labels(model=name, version=version).inc()
+
+    def _create_response_cache(self) -> ResponseCache:
+        return LocalCache(size=self._settings.cache_size)
+
+    def _get_response_cache(self) -> Optional[ResponseCache]:
+        return self._response_cache
