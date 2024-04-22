@@ -109,14 +109,17 @@ class DataPlane:
         name: str,
         version: Optional[str] = None,
     ):
+        # need to cache the payload here since it
+        # will be modified in the context manager
+        if self._response_cache is not None:
+            cache_key = payload.json()
+
         async with self._infer_contextmanager(payload, name, version) as model:
             if (
                 self._response_cache is not None
                 and model.settings.cache_enabled is not False
             ):
-                cache_key = payload.json()
                 cache_value = await self._response_cache.lookup(cache_key)
-
                 if cache_value != "":
                     prediction = InferenceResponse.parse_raw(cache_value)
                 else:
