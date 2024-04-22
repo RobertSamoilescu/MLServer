@@ -3,7 +3,7 @@ from prometheus_client import (
     Counter,
     Summary,
 )
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Coroutine, Optional
 
 from ..model import MLModel
 from ..errors import ModelNotReady
@@ -87,7 +87,29 @@ class DataPlane:
         name: str,
         version: Optional[str] = None,
     ) -> InferenceResponse:
-        async with self._infer(payload, name, version) as model:
+        return await self._infer("predict", payload, name, version)
+
+    async def generate(
+        self, payload: InferenceRequest, name: str, version: Optional[str] = None
+    ) -> InferenceResponse:
+        return await self._infer("generate", payload, name, version)
+
+    async def generate_stream(
+        self, payload: InferenceRequest, name: str, version: Optional[str] = None
+    ) -> AsyncIterator[InferenceResponse]:
+        async for response in self._infer_ostream(
+            "generate_stream", payload, name, version
+        ):
+            yield response
+
+    async def _infer(
+        self,
+        method_name: str,
+        payload: InferenceRequest,
+        name: str,
+        version: Optional[str] = None,
+    ):
+        async with self._infer_contextmanager(payload, name, version) as model:
             if (
                 self._response_cache is not None
                 and model.settings.cache_enabled is not False
@@ -98,23 +120,30 @@ class DataPlane:
                 if cache_value != "":
                     prediction = InferenceResponse.parse_raw(cache_value)
                 else:
-                    prediction = await model.predict(payload)
+                    predict_method = getattr(model, method_name)
+                    prediction = await predict_method(payload)
                     # ignore cache insertion error if any
                     await self._response_cache.insert(cache_key, prediction.json())
             else:
-                prediction = await model.predict(payload)
+                predict_method = getattr(model, method_name)
+                prediction = await predict_method(payload)
 
             # Ensure ID matches
             prediction.id = payload.id
             self._inference_middleware.response_middleware(prediction, model.settings)
             return prediction
 
-    async def infer_stream(
-        self, payload: InferenceRequest, name: str, version: Optional[str] = None
+    async def _infer_ostream(
+        self,
+        method_name: str,
+        payload: InferenceRequest,
+        name: str,
+        version: Optional[str] = None,
     ) -> AsyncIterator[InferenceResponse]:
-        async with self._infer(payload, name, version) as model:
+        async with self._infer_contextmanager(payload, name, version) as model:
             # TODO: Implement cache for stream
-            async for prediction in model.predict_stream(payload):
+            predict_method = getattr(model, method_name)
+            async for prediction in predict_method(payload):
                 # Ensure ID matches
                 prediction.id = payload.id
                 self._inference_middleware.response_middleware(
@@ -123,7 +152,7 @@ class DataPlane:
                 yield prediction
 
     @asynccontextmanager
-    async def _infer(
+    async def _infer_contextmanager(
         self,
         payload: InferenceRequest,
         name: str,
@@ -145,7 +174,6 @@ class DataPlane:
                 raise ModelNotReady(name, version)
 
             self._inference_middleware.request_middleware(payload, model.settings)
-
             with model_context(model.settings):
                 yield model
 
