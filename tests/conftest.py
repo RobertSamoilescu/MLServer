@@ -26,7 +26,7 @@ from mlserver.metrics.registry import MetricsRegistry, REGISTRY as METRICS_REGIS
 from mlserver import types, Settings, ModelSettings, MLServer
 
 from .metrics.utils import unregister_metrics
-from .fixtures import SumModel, TextModel, ErrorModel, SimpleModel
+from .fixtures import SumModel, TextModel, TextStreamModel, ErrorModel, SimpleModel
 from .utils import RESTClient, get_available_ports, _pack, _get_tarball_name
 
 TESTS_PATH = os.path.dirname(__file__)
@@ -175,7 +175,6 @@ async def sum_model(
 
 @pytest.fixture
 def text_model_settings() -> ModelSettings:
-    # TODO: Enable parallel_workers once stream is supported
     return ModelSettings(
         name="text-model",
         implementation=TextModel,
@@ -190,6 +189,25 @@ async def text_model(
 ) -> TextModel:
     await model_registry.load(text_model_settings)
     return await model_registry.get_model(text_model_settings.name)
+
+
+@pytest.fixture
+def text_stream_model_settings() -> ModelSettings:
+    # TODO: Enable parallel_workers once stream is supported
+    return ModelSettings(
+        name="text-stream-model",
+        implementation=TextStreamModel,
+        parallel_workers=0,
+        parameters={"version": "v1.2.3"},
+    )
+
+
+@pytest.fixture
+async def text_stream_model(
+    model_registry: MultiModelRegistry, text_stream_model_settings: ModelSettings
+) -> TextModel:
+    await model_registry.load(text_stream_model_settings)
+    return await model_registry.get_model(text_stream_model_settings.name)
 
 
 @pytest.fixture
