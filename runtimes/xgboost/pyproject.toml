@@ -11,6 +11,7 @@ packages = [{include = "mlserver_xgboost"}]
 python = ">=3.9,<3.13"
 mlserver = "*"
 xgboost = {extras = ["scikit-learn"], version = "*"}
+gevent = "^24.11.1"
 
 [tool.poetry.group.dev.dependencies]
 mlserver = {path = "../..", develop = true}

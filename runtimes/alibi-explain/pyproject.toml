@@ -16,6 +16,7 @@ mlserver_lightgbm = "*"
 orjson = "*"
 # remove when alibi v0.10 is released
 alibi = {extras = ["shap", "tensorflow"], git = "https://github.com/SeldonIO/alibi.git", branch = "master"}
+gevent = "^24.11.1"
 
 [tool.poetry.group.dev.dependencies]
 mlserver = {path = "../..", develop = true}

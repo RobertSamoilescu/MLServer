@@ -12,6 +12,7 @@ python = ">=3.9,<3.13"
 mlserver = "*"
 # remove after alibi-detect 0.13 is released
 alibi-detect = {extras = ["tensorflow"], git = "https://github.com/SeldonIO/alibi-detect.git", branch = "master"}
+gevent = "^24.11.1"
 
 [tool.poetry.group.dev.dependencies]
 mlserver = {path = "../..", develop = true}
